@@ -31,8 +31,40 @@ const VARIABLE_LABELS: Record<string, string> = {
 export const AccountStatus: React.FC<AccountStatusProps> = ({
   showTrades = true,
 }) => {
-  const { backtestState } = useBacktestStore();
-  const { accountState, tradeRecords, strategy } = backtestState;
+  const { backtestState, settings } = useBacktestStore();
+  const { accountState, tradeRecords, strategy, currentPeriodIndex, klineData } = backtestState;
+
+  // 计算已执行时间
+  const getElapsedTime = (): string => {
+    if (klineData.length === 0 || currentPeriodIndex === 0) {
+      return '0 时';
+    }
+    
+    const timeFrame = settings.timeFrame;
+    let hours = 0;
+    
+    switch (timeFrame) {
+      case '1h':
+        hours = currentPeriodIndex;
+        break;
+      case '1d':
+        hours = currentPeriodIndex * 24;
+        break;
+      case '1w':
+        hours = currentPeriodIndex * 24 * 7;
+        break;
+      default:
+        hours = currentPeriodIndex * 24;
+    }
+    
+    if (hours < 24) {
+      return `${hours} 时`;
+    } else {
+      const days = Math.floor(hours / 24);
+      const remainingHours = hours % 24;
+      return remainingHours > 0 ? `${days} 天 ${remainingHours} 时` : `${days} 天`;
+    }
+  };
 
   return (
     <div className="bg-gray-800 rounded-lg p-4 space-y-4">
@@ -40,6 +72,12 @@ export const AccountStatus: React.FC<AccountStatusProps> = ({
 
       {/* Core Metrics */}
       <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+        <div className="bg-gray-700/50 rounded p-3">
+          <p className="text-xs text-gray-400 mb-1">交易耗时</p>
+          <p className="text-lg font-semibold text-white">
+            {getElapsedTime()}
+          </p>
+        </div>
         <div className="bg-gray-700/50 rounded p-3">
           <p className="text-xs text-gray-400 mb-1">当前权益</p>
           <p className="text-lg font-semibold text-white">
@@ -184,7 +222,20 @@ export const AccountStatus: React.FC<AccountStatusProps> = ({
       {/* Trade Records */}
       {showTrades && tradeRecords.length > 0 && (
         <div>
-          <h3 className="text-md font-medium text-white mb-3">成交记录</h3>
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-md font-medium text-white">成交记录</h3>
+            <div className="text-xs text-gray-400 space-x-2">
+              <span className="text-green-400">
+                买入: {tradeRecords.filter(r => r.type === 'buy').length}
+              </span>
+              <span className="text-red-400">
+                卖出: {tradeRecords.filter(r => r.type === 'sell').length}
+              </span>
+              <span className="text-gray-500">
+                总计: {tradeRecords.length}
+              </span>
+            </div>
+          </div>
           <div className="max-h-64 overflow-auto scrollbar-hide-hover">
             <table className="w-full text-sm min-w-[600px]">
               <thead className="text-gray-400 sticky top-0 bg-gray-800">

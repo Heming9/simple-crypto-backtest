@@ -110,7 +110,7 @@ export const MarketDataSelector: React.FC<MarketDataSelectorProps> = ({
       const data = await fetchKlineData(
         settings.asset.symbol,
         settings.timeFrame,
-        settings.startTime,
+        settings.startTime - 1, // startTime 是不包含关系，所以减1
         initialEndTime
       );
 

@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { createChart, IChartApi, CandlestickData, CandlestickSeries } from 'lightweight-charts';
 import type { KlineData } from '../types';
+import dayjs from 'dayjs';
 
 interface KlineChartProps {
   data: KlineData[];
@@ -48,6 +49,10 @@ export const KlineChart: React.FC<KlineChartProps> = ({
         crosshair: {
           mode: 1,
         },
+        localization: {
+          locale: navigator.language,
+          priceFormatter: (price: number) => price.toFixed(2),
+        },
         timeScale: {
           borderColor: '#2B2B43',
           timeVisible: true,
@@ -56,6 +61,24 @@ export const KlineChart: React.FC<KlineChartProps> = ({
       });
 
       chartRef.current = chart;
+
+      // 设置时间格式化使用本地时区
+      chart.timeScale().applyOptions({
+        tickMarkFormatter: (time: any) => {
+          const date = dayjs(time * 1000);
+          return date.format('MM-DD');
+        },
+        timeVisible: true,
+        secondsVisible: false,
+      });
+
+      // 自定义十字准星时间显示
+      chart.subscribeCrosshairMove((param) => {
+        if (param.time) {
+          const date = dayjs(param.time * 1000);
+          console.log('十字准星时间（本地）:', date.format('YYYY-MM-DD HH:mm:ss'));
+        }
+      });
 
       // Create candlestick series
       const candlestickSeries = chart.addSeries(CandlestickSeries, {
@@ -91,14 +114,31 @@ export const KlineChart: React.FC<KlineChartProps> = ({
       
       console.log(`显示数据范围：0 到 ${displayData.length - 1}`);
       
+      // 辅助函数：调整时间戳以正确显示本地时区
+      // Lightweight Charts 假定时间戳是 UTC 时间，我们需要把时间戳反向调整时区偏移
+      const adjustTimeToLocal = (timestamp: number): number => {
+        const date = new Date(timestamp);
+        // 计算本地时区偏移（分钟）
+        const timezoneOffsetMinutes = date.getTimezoneOffset();
+        // timezoneOffsetMinutes 是本地时间相对于 UTC 的偏移，负数表示东时区（例如中国 UTC+8 是 -480）
+        // 我们需要把时间戳减去这个偏移的毫秒数，这样 Lightweight Charts 显示 UTC 时就是我们的本地时间
+        return timestamp - timezoneOffsetMinutes * 60 * 1000;
+      };
+
       // Set data
-      const chartData: CandlestickData[] = displayData.map((d) => ({
-        time: (d.time / 1000) as any,
-        open: d.open,
-        high: d.high,
-        low: d.low,
-        close: d.close,
-      }));
+      const chartData: CandlestickData[] = displayData.map((d) => {
+        const originalDate = new Date(d.time);
+        const adjustedTime = adjustTimeToLocal(d.time);
+        const adjustedDate = new Date(adjustedTime);
+        console.log(`时间调整：原始=${originalDate.toISOString()} (本地=${originalDate.toLocaleString()}) → 调整后=${adjustedDate.toISOString()}`);
+        return {
+          time: (adjustedTime / 1000) as any,
+          open: d.open,
+          high: d.high,
+          low: d.low,
+          close: d.close,
+        };
+      });
 
       console.log('设置图表数据，第一条:', chartData[0], '最后一条:', chartData[chartData.length - 1]);
       console.log('数据已去重并按时间升序排序');
@@ -148,9 +188,16 @@ export const KlineChart: React.FC<KlineChartProps> = ({
       ? sortedData.slice(0, currentPeriodIndex + 1)
       : sortedData.slice(0, 1);
 
+    // 辅助函数：调整时间戳以正确显示本地时区
+    const adjustTimeToLocal = (timestamp: number): number => {
+      const date = new Date(timestamp);
+      const timezoneOffsetMinutes = date.getTimezoneOffset();
+      return timestamp - timezoneOffsetMinutes * 60 * 1000;
+    };
+
     // Update series data
     const chartData: CandlestickData[] = displayData.map((d) => ({
-      time: (d.time / 1000) as any,
+      time: (adjustTimeToLocal(d.time) / 1000) as any,
       open: d.open,
       high: d.high,
       low: d.low,
