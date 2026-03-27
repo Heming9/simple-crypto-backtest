@@ -1,7 +1,7 @@
 中文文档: https://github.com/Heming9/simple-crypto-backtest/blob/master/README-zh.md
 
 # Crypto Market Backtesting Platform
-You can try this demo in https://heming9.github.io/simple-crypto-backtest
+You can try this demo in https://heming9.github.io/OnlineEasyCryptoBacktest
 
 Trading strategy backtesting and analysis tool based on historical data, with support for Chinese and English interfaces.
 
