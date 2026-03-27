@@ -1,5 +1,7 @@
 # 加密市场回测平台
 
+您可以在这尝试此DEMO https://heming9.github.io/simple-crypto-backtest
+
 基于历史数据的交易策略回测分析工具，支持中文和英文界面。
 
 ## 功能特性
@@ -10,6 +12,9 @@
 - ⏯️ **回测控制**：支持播放、暂停、快进、速度调节等功能
 - 📊 **成交记录**：详细记录每笔交易信息，包含买卖次数统计
 - 🌍 **国际化**：支持中文和英文界面切换
+
+Preview: 
+<img width="1212" height="718" alt="image" src="https://github.com/user-attachments/assets/5fa7e327-9019-441b-86c5-cdc8036db6ab" />
 
 ## 技术栈
 
